@@ -13,7 +13,8 @@ const styles = StyleSheet.create({
       textAlign: "center",
     },
     flexRow: {
-      flexDirection: "row",
+      alignContent: "center",
+      alignItems: "center",
     },
     input: {
       borderColor: "#4630eb",

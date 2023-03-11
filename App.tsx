@@ -1,16 +1,20 @@
 import { useState, useEffect } from "react";
-import {
-  ScrollView,
-  Text,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { ScrollView, Text, TouchableOpacity, View } from "react-native";
 import styles from "./styles/base.styles";
 import ToDoRepository from "./services/service-db";
 import { IItem } from "./models";
-import {ListItem, TextInput} from "@react-native-material/core";
 import Icon from "@expo/vector-icons/MaterialCommunityIcons";
-
+import {
+  Provider,
+  Stack,
+  Button,
+  Dialog,
+  DialogHeader,
+  DialogContent,
+  DialogActions,
+  TextInput,
+  ListItem,
+} from "@react-native-material/core";
 
 const db = new ToDoRepository();
 db.openDatabase();
@@ -37,8 +41,7 @@ const Items = ({ done: doneHeading, onPressItem }) => {
           leading={<Icon name={done ? "check" : "note"} size={24} />}
           onPress={() => onPressItem && onPressItem(id)}
           title={value}
-        >
-        </ListItem>
+        ></ListItem>
       ))}
     </View>
   );
@@ -47,6 +50,7 @@ const Items = ({ done: doneHeading, onPressItem }) => {
 const App = () => {
   const [text, setText] = useState(null);
   const [forceUpdate, forceUpdateId] = useForceUpdate();
+  const [visible, setVisible] = useState(false);
 
   useEffect(() => {
     db.createTbale();
@@ -62,34 +66,67 @@ const App = () => {
   };
 
   return (
-    <View style={{top: 90}}>
-      <Text style={styles.heading}>TODO App</Text>
-      <>
-        <View style={styles.flexRow}>
-        <TextInput label="O que você quer lembrar?" variant="standard"
-            onChangeText={(text) => setText(text)}
-            onSubmitEditing={() => {
-              add(text);
-              setText(null);
-            }}
-            style={styles.input}
-            value={text}
-          />
-        </View>
-        <ScrollView style={{padding: 10}}>
-          <Items
-            key={`forceupdate-todo-${forceUpdateId}`}
-            done={false}
-            onPressItem={(id) => db.updateById(id, forceUpdate)}
-          />
-          <Items
-            done
-            key={`forceupdate-done-${forceUpdateId}`}
-            onPressItem={(id) => db.deleteById(id, forceUpdate)}
-          />
-        </ScrollView>
-      </>
-    </View>
+    <Provider>
+      <View style={{ top: 90 }}>
+        <Text style={styles.heading}>TODO App</Text>
+        <>
+          <View style={styles.flexRow}>
+            <Button
+              title="Adicionar lembrete"
+              style={{ margin: 16 }}
+              onPress={() => setVisible(true)}
+            />
+            <Dialog visible={visible} onDismiss={() => setVisible(false)}>
+              <DialogHeader title="Adicionar lembrete" />
+              <DialogContent>
+                <Stack spacing={2}>
+                  <Text>
+                    Digite a descrição/titulo e a data de expiração
+                  </Text>
+                  <TextInput
+                    label="O que você quer lembrar?"
+                    variant="standard"
+                    onChangeText={(text) => setText(text)}
+                    style={styles.input}
+                    value={text}
+                  />
+                </Stack>
+              </DialogContent>
+              <DialogActions>
+                <Button
+                  title="Cancelar"
+                  compact
+                  variant="text"
+                  onPress={() => setVisible(false)}
+                />
+                <Button
+                  title="Salvar"
+                  compact
+                  variant="text"
+                  onPress={() => {
+                    add(text);
+                    setText(null);
+                    setVisible(false);
+                  }}
+                />
+              </DialogActions>
+            </Dialog>
+          </View>
+          <ScrollView style={{ padding: 10 }}>
+            <Items
+              key={`forceupdate-todo-${forceUpdateId}`}
+              done={false}
+              onPressItem={(id) => db.updateById(id, forceUpdate)}
+            />
+            <Items
+              done
+              key={`forceupdate-done-${forceUpdateId}`}
+              onPressItem={(id) => db.deleteById(id, forceUpdate)}
+            />
+          </ScrollView>
+        </>
+      </View>
+    </Provider>
   );
 };
 
