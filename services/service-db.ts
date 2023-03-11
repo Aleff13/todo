@@ -6,21 +6,21 @@ class ToDoRepository {
   }
 
   openDatabase = () => {
-    const db = SQLite.openDatabase("db.db");
+    const db = SQLite.openDatabase("dbnew.db");
     return db;
   };
-  createTbale = () => {
+  createTable = () => {
     this.db.transaction((tx: SQLite.SQLTransaction) => {
         tx.executeSql(
-          "create table if not exists items (id integer primary key not null, done int, value text);"
+          "create table if not exists items (id integer primary key not null, done int, value text, date text);"
         );
       });
   }
 
-  insertItem = (text: string, calbackFn: void) => {
+  insertItem = (text: string, date: string, calbackFn: void) => {
     this.db.transaction(
         (tx: SQLite.SQLTransaction) => {
-          tx.executeSql("insert into items (done, value) values (0, ?)", [text]);
+          tx.executeSql("insert into items (done, value, date) values (0, ?, ?)", [text, date]);
           tx.executeSql("select * from items", [], (_, { rows }) =>
             console.log(JSON.stringify(rows))
           );

@@ -7,4 +7,5 @@ export interface IItem {
   id: number;
   done: boolean;
   value: string;
+  date: string;
 }

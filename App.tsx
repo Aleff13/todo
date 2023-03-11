@@ -13,8 +13,12 @@ import {
   DialogContent,
   DialogActions,
   TextInput,
+  VStack,
   ListItem,
 } from "@react-native-material/core";
+import DateTimePicker, {
+  DateTimePickerEvent,
+} from "@react-native-community/datetimepicker";
 
 const db = new ToDoRepository();
 db.openDatabase();
@@ -35,13 +39,26 @@ const Items = ({ done: doneHeading, onPressItem }) => {
   return (
     <View style={styles.sectionContainer}>
       <Text style={styles.sectionHeading}>{heading}</Text>
-      {items.map(({ id, done, value }) => (
-        <ListItem
-          key={id}
-          leading={<Icon name={done ? "check" : "note"} size={24} />}
-          onPress={() => onPressItem && onPressItem(id)}
-          title={value}
-        ></ListItem>
+      {items.map(({ id, done, value, date }) => (
+        <>
+          <ListItem
+            key={id}
+            leading={<Icon name={done ? "check" : "note"} size={24} />}
+            onPress={() => onPressItem && onPressItem(id)}
+            title={value}
+            secondaryText={new Date(date).toISOString().split("T")[0]}
+            trailing={(props) => (
+              <Icon
+                name={
+                  !done && new Date(date).getTime() - new Date().getTime() < 0
+                    ? "clock-alert"
+                    : "clock"
+                }
+                {...props}
+              />
+            )}
+          ></ListItem>
+        </>
       ))}
     </View>
   );
@@ -49,20 +66,27 @@ const Items = ({ done: doneHeading, onPressItem }) => {
 
 const App = () => {
   const [text, setText] = useState(null);
+  const [date, setDate] = useState(new Date());
   const [forceUpdate, forceUpdateId] = useForceUpdate();
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    db.createTbale();
+    db.createTable();
   }, []);
 
-  const add = (text: string) => {
+  const add = (text: string, date: string) => {
     // is text empty?
     if (text === null || text === "") {
       return false;
     }
 
-    db.insertItem(text, forceUpdate);
+    if (date === null || date === "") {
+      return false;
+    }
+
+    let cleanDate = new Date(date).toISOString();
+
+    db.insertItem(text, cleanDate, forceUpdate);
   };
 
   return (
@@ -79,18 +103,22 @@ const App = () => {
             <Dialog visible={visible} onDismiss={() => setVisible(false)}>
               <DialogHeader title="Adicionar lembrete" />
               <DialogContent>
-                <Stack spacing={2}>
-                  <Text>
-                    Digite a descrição/titulo e a data de expiração
-                  </Text>
+                <VStack m={8} spacing={20} divider={false}>
+                  <Text>Digite a descrição/titulo e a data de expiração</Text>
+                  <DateTimePicker
+                    style={{ width: 90 }}
+                    value={date}
+                    onChange={(event: DateTimePickerEvent, date: Date) =>
+                      setDate(date)
+                    }
+                  />
                   <TextInput
                     label="O que você quer lembrar?"
-                    variant="standard"
+                    variant="filled"
                     onChangeText={(text) => setText(text)}
-                    style={styles.input}
                     value={text}
                   />
-                </Stack>
+                </VStack>
               </DialogContent>
               <DialogActions>
                 <Button
@@ -104,7 +132,8 @@ const App = () => {
                   compact
                   variant="text"
                   onPress={() => {
-                    add(text);
+                    // add(text);
+                    add(text, date.toISOString());
                     setText(null);
                     setVisible(false);
                   }}
